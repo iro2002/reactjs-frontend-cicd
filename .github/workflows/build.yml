@@ -50,4 +50,4 @@ jobs:
       - name: Run Docker Container
         run: |
           IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/reactjs-app"
-          docker run -d -p 5000:5173 --name reactjs-app-container $IMAGE_NAME:latest
+          docker run -d -p 5001:5173 --name reactjs-app-container $IMAGE_NAME:latest
