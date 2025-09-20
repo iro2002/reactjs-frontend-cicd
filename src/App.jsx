@@ -1,85 +1,93 @@
-// App.js
-import { useState, useEffect } from "react";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 function App() {
   const [todos, setTodos] = useState([]);
   const [task, setTask] = useState("");
 
   // Fetch todos
+  const fetchTodos = async () => {
+    const res = await fetch("http://localhost:5000/todos");
+    const data = await res.json();
+    setTodos(data);
+  };
+
   useEffect(() => {
-    fetch("http://localhost:5001/api/todos")
-      .then(res => res.json())
-      .then(data => setTodos(data));
+    fetchTodos();
   }, []);
 
   // Add todo
-  const addTodo = () => {
+  const addTodo = async () => {
     if (!task) return;
-    fetch("http://localhost:5001/api/todos", {
+    const res = await fetch("http://localhost:5000/todos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task }),
-    })
-      .then(res => res.json())
-      .then(newTodo => setTodos([...todos, newTodo]));
+      body: JSON.stringify({ task })
+    });
+    const newTodo = await res.json();
+    setTodos([...todos, newTodo]);
     setTask("");
   };
 
-  // Toggle
-  const toggleTodo = (id, completed) => {
-    fetch(`http://localhost:5001/api/todos/${id}`, {
+  // Update todo
+  const updateTodo = async (id) => {
+    const newTask = prompt("Update task:");
+    if (!newTask) return;
+    const res = await fetch(`http://localhost:5000/todos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: !completed }),
-    })
-      .then(res => res.json())
-      .then(updated => setTodos(todos.map(t => t._id === id ? updated : t)));
+      body: JSON.stringify({ task: newTask })
+    });
+    const updatedTodo = await res.json();
+    setTodos(todos.map(t => (t._id === id ? updatedTodo : t)));
   };
 
-  // Delete
-  const deleteTodo = (id) => {
-    fetch(`http://localhost:5001/api/todos/${id}`, { method: "DELETE" })
-      .then(() => setTodos(todos.filter(t => t._id !== id)));
+  // Delete todo
+  const deleteTodo = async (id) => {
+    await fetch(`http://localhost:5000/todos/${id}`, { method: "DELETE" });
+    setTodos(todos.filter(t => t._id !== id));
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
-      <h1 className="text-3xl font-bold mb-6 text-blue-600">My To-Do App</h1>
-
-      <div className="flex gap-2 mb-6">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
+      <h1 className="text-3xl font-bold mb-6">Simple MERN CRUD by IROSH</h1>
+      
+      <div className="flex mb-4">
         <input
+          type="text"
           value={task}
           onChange={e => setTask(e.target.value)}
           placeholder="New task"
-          className="px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={addTodo}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600"
         >
           Add
         </button>
       </div>
 
-      <ul className="w-96 bg-white shadow-lg rounded-lg p-4 space-y-2">
+      <ul className="w-full max-w-md">
         {todos.map(todo => (
           <li
             key={todo._id}
-            className="flex justify-between items-center p-2 border-b last:border-none"
+            className="flex justify-between items-center bg-white rounded shadow p-3 mb-2"
           >
-            <span
-              onClick={() => toggleTodo(todo._id, todo.completed)}
-              className={`cursor-pointer ${todo.completed ? "line-through text-gray-400" : "text-gray-800"}`}
-            >
-              {todo.task}
-            </span>
-            <button
-              onClick={() => deleteTodo(todo._id)}
-              className="text-red-500 hover:text-red-700"
-            >
-              ❌
-            </button>
+            <span>{todo.task}</span>
+            <div>
+              <button
+                onClick={() => updateTodo(todo._id)}
+                className="bg-yellow-400 text-white px-3 py-1 rounded mr-2 hover:bg-yellow-500"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteTodo(todo._id)}
+                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
