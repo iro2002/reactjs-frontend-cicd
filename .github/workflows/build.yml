@@ -9,45 +9,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository
       - name: Checkout Source
         uses: actions/checkout@v4
 
-      # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build Docker image
       - name: Build Docker Image
-        run: |
-          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/reactjs-app"
-          docker build -t $IMAGE_NAME:latest .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/reactjs-app:latest .
 
-      # Push Docker image to Docker Hub
       - name: Push Docker Image
-        run: |
-          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/reactjs-app"
-          docker push $IMAGE_NAME:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/reactjs-app:latest
 
   deploy:
     needs: build
     runs-on: self-hosted
     steps:
-      # Pull the latest Docker image
-      - name: Pull Docker Image
-        run: |
-          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/reactjs-app"
-          docker pull $IMAGE_NAME:latest
+      - name: Create Docker Network
+        run: docker network create nodejs-network || true
 
-      # Remove old container if exists
+      - name: Pull Docker Image
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/reactjs-app:latest
+
       - name: Delete old container
         run: docker rm -f reactjs-app-container || true
 
-      # Run the Docker container
       - name: Run Docker Container
-        run: |
-          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/reactjs-app"
-          docker run -d -p 5001:5173 --name reactjs-app-container $IMAGE_NAME:latest
+        # This command runs the React container and connects it to the same network
+        # as the Node.js container. It also passes an environment variable
+        # so the React app knows the backend's address.
+        run: >
+          docker run -d -p 5001:5173
+          --name reactjs-app-container
+          --network nodejs-network
+          -e VITE_API_URL=http://nodejs-app-container:5000
+          ${{ secrets.DOCKER_USERNAME }}/reactjs-app:latest
