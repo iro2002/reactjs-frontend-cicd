@@ -4,11 +4,18 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [task, setTask] = useState("");
 
+  // Base URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Fetch todos
   const fetchTodos = async () => {
-    const res = await fetch("http://localhost:5000/todos");
-    const data = await res.json();
-    setTodos(data);
+    try {
+      const res = await fetch(`${API_URL}/todos`);
+      const data = await res.json();
+      setTodos(data);
+    } catch (err) {
+      console.error("Error fetching todos:", err);
+    }
   };
 
   useEffect(() => {
@@ -18,33 +25,45 @@ function App() {
   // Add todo
   const addTodo = async () => {
     if (!task) return;
-    const res = await fetch("http://localhost:5000/todos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task })
-    });
-    const newTodo = await res.json();
-    setTodos([...todos, newTodo]);
-    setTask("");
+    try {
+      const res = await fetch(`${API_URL}/todos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task })
+      });
+      const newTodo = await res.json();
+      setTodos([...todos, newTodo]);
+      setTask("");
+    } catch (err) {
+      console.error("Error adding todo:", err);
+    }
   };
 
   // Update todo
   const updateTodo = async (id) => {
     const newTask = prompt("Update task:");
     if (!newTask) return;
-    const res = await fetch(`http://localhost:5000/todos/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task: newTask })
-    });
-    const updatedTodo = await res.json();
-    setTodos(todos.map(t => (t._id === id ? updatedTodo : t)));
+    try {
+      const res = await fetch(`${API_URL}/todos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: newTask })
+      });
+      const updatedTodo = await res.json();
+      setTodos(todos.map(t => (t._id === id ? updatedTodo : t)));
+    } catch (err) {
+      console.error("Error updating todo:", err);
+    }
   };
 
   // Delete todo
   const deleteTodo = async (id) => {
-    await fetch(`http://localhost:5000/todos/${id}`, { method: "DELETE" });
-    setTodos(todos.filter(t => t._id !== id));
+    try {
+      await fetch(`${API_URL}/todos/${id}`, { method: "DELETE" });
+      setTodos(todos.filter(t => t._id !== id));
+    } catch (err) {
+      console.error("Error deleting todo:", err);
+    }
   };
 
   return (
