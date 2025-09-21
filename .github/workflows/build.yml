@@ -38,12 +38,7 @@ jobs:
         run: docker rm -f reactjs-app-container || true
 
       - name: Run Docker Container
-        # This command runs the React container and connects it to the same network
-        # as the Node.js container. It also passes an environment variable
-        # so the React app knows the backend's address.
-        run: >
-          docker run -d -p 5001:5173
+        run: 
+          docker run -d -p 5173:5173
           --name reactjs-app-container
-          --network nodejs-network
-          -e VITE_API_URL=http://nodejs-app-container:5000
           ${{ secrets.DOCKER_USERNAME }}/reactjs-app:latest
